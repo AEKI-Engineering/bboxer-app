@@ -7,6 +7,7 @@ from typing import Optional
 
 from PIL import Image
 import bbox_visualizer as bbv
+from .utils import convert_normalized_xy
 import cv2
 import numpy as np
 from .schemas import ImageModel
@@ -71,36 +72,14 @@ def main(args: argparse.Namespace) -> Optional[int]:
         )
 
         if response.status_code == 200:
-            img = np.array(im.__root__.to_pil_image())
-            print(img.shape)
-
             data = response.json()
 
+            img = np.array(im.__root__.to_pil_image())
+
             for detection in data["detections"]:
-                bbox = list(
-                    (
-                        int(
-                            min([v["x"] for v in detection["boundingBox"]])
-                            * img.shape[0]
-                        ),
-                        int(
-                            min([v["y"] for v in detection["boundingBox"]])
-                            * img.shape[0]
-                        ),
-                        int(
-                            max([v["x"] for v in detection["boundingBox"]])
-                            * img.shape[0]
-                        ),
-                        int(
-                            max([v["y"] for v in detection["boundingBox"]])
-                            * img.shape[0]
-                        ),
-                    )
-                )
-                img = bbv.bbox_visualizer.draw_rectangle(
-                    img,
-                    bbox=bbox,
-                )
+                bbox = convert_normalized_xy(detection["boundingBox"], img.shape)
+
+                img = bbv.bbox_visualizer.draw_rectangle(img, bbox=bbox)
                 img = bbv.add_label(
                     img, label=f"{detection['name']} {detection['score']}", bbox=bbox
                 )
