@@ -24,8 +24,8 @@ def convert_normalized_xy(
         y_max
     """
     return [
-        int(min([v["x"] for v in xy]) * shape[0]),
+        int(min([v["x"] for v in xy]) * shape[1]),
         int(min([v["y"] for v in xy]) * shape[0]),
-        int(max([v["x"] for v in xy]) * shape[0]),
+        int(max([v["x"] for v in xy]) * shape[1]),
         int(max([v["y"] for v in xy]) * shape[0]),
     ]

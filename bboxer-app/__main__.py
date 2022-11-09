@@ -3,6 +3,7 @@ import atexit
 import json
 from pathlib import Path
 import sys
+import time
 from typing import Optional
 
 from PIL import Image
@@ -19,10 +20,16 @@ from .config import settings
 
 
 def main(args: argparse.Namespace) -> Optional[int]:
+    print(":: bboxer-app ::")
+
+    start = time.perf_counter()
+
+    # Define headers
     headers = {"Content-Type": "application/json"}
 
     # Authenticate only for default URL
     if args.url == settings.API_DEFAULT_URL:
+        print(f"Using default endpoint: {settings.API_DEFAULT_URL}")
         # Register persistent token cache
         # Note: Seems like MSAL is not capable of managing token cache for
         # short-lived applications. To investigate further
@@ -48,20 +55,23 @@ def main(args: argparse.Namespace) -> Optional[int]:
 
         if not token:
             # If no token in cache found, authenticate user with browser
-            print("Prompting browser")
+            print("Prompting browser to authenticate...")
             token = app.acquire_token_interactive(settings.AZURE_TOKEN_SCOPES)
 
         # Safe get access token
         try:
             headers["Authorization"] = "Bearer " + token["access_token"]
+            print("Authentication successful.")
         except KeyError:
-            print("Failed to authenticate: no access token returned")
+            print("Failed to authenticate: no access token returned.")
             return 1
     else:
         # Don't use token for overwritten URL
+        print(f"Using local endpoint: {args.url}")
         token = None
 
     if len(args.images) == 1:
+        print("Running detection...")
         # Run single image prediction
         im = ImageModel(__root__=args.images[0])
 
@@ -76,6 +86,10 @@ def main(args: argparse.Namespace) -> Optional[int]:
 
             img = np.array(im.__root__.to_pil_image())
 
+            print(
+                f"1/1 :: {img.shape[0]}x{img.shape[1]} px, {data['time']} s, {len(data['detections'])} detected objects."
+            )
+
             for detection in data["detections"]:
                 bbox = convert_normalized_xy(detection["boundingBox"], img.shape)
 
@@ -84,26 +98,68 @@ def main(args: argparse.Namespace) -> Optional[int]:
                     img, label=f"{detection['name']} {detection['score']}", bbox=bbox
                 )
 
-            Image.fromarray(img).save("1.png")
+            if not args.no_save:
+                print("Saving image to '1.png'")
+                Image.fromarray(img).save("1.png")
+        else:
+            print(f"Failed to execute API request, status code: {response.status_code}")
+            try:
+                print(json.dumps(response.json(), indent=2))
+            except Exception:
+                # Silently pass since the next instruction is nonzero return
+                pass
+            return 1
 
     else:
         # Run batch prediction
-        ims = [ImageModel(__root__=image)() for image in args.images]
+        ims = [ImageModel(__root__=image) for image in args.images]
 
         response = requests.post(
             f"{args.url}{settings.API_ROUTE}{settings.PREDICT_BATCH_ENDPOINT}",
             headers=headers,
-            json={"images": ims},
+            json={"images": [im() for im in ims]},
         )
 
-    if response.status_code == 200:
-        data = response.json()
+        if response.status_code == 200:
+            data = response.json()
 
-        # print(json.dumps(data, indent=2))
-    else:
-        print("Failed api call")
-        print(json.dumps(response.json(), indent=2))
-        return 1
+            for result, i in zip(
+                data["batchResults"], range(len(data["batchResults"]))
+            ):
+
+                img = np.array(ims[i].__root__.to_pil_image())
+
+                print(
+                    f"{i + 1}/{len(data['batchResults'])} :: {img.shape[0]}x{img.shape[1]} px, {len(result['detections'])} detected objects."
+                )
+
+                for detection in result["detections"]:
+                    bbox = convert_normalized_xy(detection["boundingBox"], img.shape)
+
+                    img = bbv.bbox_visualizer.draw_rectangle(img, bbox=bbox)
+                    img = bbv.add_label(
+                        img,
+                        label=f"{detection['name']} {detection['score']}",
+                        bbox=bbox,
+                    )
+
+                if not args.no_save:
+                    print(f"Saving image to '{i}.png'")
+                    Image.fromarray(img).save(f"{i}.png")
+
+            # print(json.dumps(data, indent=2))
+        else:
+            print(f"Failed to execute API request, status code: {response.status_code}")
+            try:
+                print(json.dumps(response.json(), indent=2))
+            except Exception:
+                # Silently pass since the next instruction is nonzero return
+                pass
+            return 1
+
+    end = time.perf_counter()
+
+    print(f"Done! Finished in {round(end - start, 3)} seconds.")
 
 
 if __name__ == "__main__":
