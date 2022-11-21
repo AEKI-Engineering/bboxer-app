@@ -7,9 +7,8 @@ import time
 from typing import Optional
 
 from PIL import Image
-import bbox_visualizer as bbv
-from .utils import convert_normalized_xy
 import cv2
+from .utils import convert_normalized_xy, draw_bbox
 import numpy as np
 from .schemas import ImageModel
 import msal
@@ -92,11 +91,7 @@ def main(args: argparse.Namespace) -> Optional[int]:
 
             for detection in data["detections"]:
                 bbox = convert_normalized_xy(detection["boundingBox"], img.shape)
-
-                img = bbv.bbox_visualizer.draw_rectangle(img, bbox=bbox)
-                img = bbv.add_label(
-                    img, label=f"{detection['name']} {detection['score']}", bbox=bbox
-                )
+                img = draw_bbox(img, bbox, detection["name"], score=detection["score"])
 
             if not args.no_save:
                 print("Saving image to '1.png'")
@@ -135,12 +130,8 @@ def main(args: argparse.Namespace) -> Optional[int]:
 
                 for detection in result["detections"]:
                     bbox = convert_normalized_xy(detection["boundingBox"], img.shape)
-
-                    img = bbv.bbox_visualizer.draw_rectangle(img, bbox=bbox)
-                    img = bbv.add_label(
-                        img,
-                        label=f"{detection['name']} {detection['score']}",
-                        bbox=bbox,
+                    img = draw_bbox(
+                        img, bbox, detection["name"], score=detection["score"]
                     )
 
                 if not args.no_save:
