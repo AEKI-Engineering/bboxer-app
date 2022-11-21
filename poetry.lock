@@ -1,12 +1,4 @@
 [[package]]
-name = "bbox-visualizer"
-version = "0.1.0"
-description = "Different ways of visualizing objects given bounding box data"
-category = "main"
-optional = false
-python-versions = ">=3.5"
-
-[[package]]
 name = "black"
 version = "22.10.0"
 description = "The uncompromising code formatter."
@@ -395,12 +387,9 @@ testing = ["coverage (>=6.2)", "coverage-enable-subprocess (>=1)", "flaky (>=3.7
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.8, <3.11"
-content-hash = "78f269c5bb3d63b45d16262d2256f22ef4465d0a1a33cacdd6e6d810d9c9e631"
+content-hash = "c74bab316bf7b15a573116017ac295908480faf0f85144a33afab8e039141edd"
 
 [metadata.files]
-bbox-visualizer = [
-    {file = "bbox_visualizer-0.1.0-py2.py3-none-any.whl", hash = "sha256:c238adc3e158488c2ff8afba582ee82de2095bf7cf4cbb24ff7ef2b681d1d204"},
-]
 black = [
     {file = "black-22.10.0-1fixedarch-cp310-cp310-macosx_11_0_x86_64.whl", hash = "sha256:5cc42ca67989e9c3cf859e84c2bf014f6633db63d1cbdf8fdb666dcd9e77e3fa"},
     {file = "black-22.10.0-1fixedarch-cp311-cp311-macosx_11_0_x86_64.whl", hash = "sha256:5d8f74030e67087b219b032aa33a919fae8806d49c867846bfacde57f43972ef"},

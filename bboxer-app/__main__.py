@@ -7,7 +7,6 @@ import time
 from typing import Optional
 
 from PIL import Image
-import cv2
 from .utils import convert_normalized_xy, draw_bbox
 import numpy as np
 from .schemas import ImageModel
