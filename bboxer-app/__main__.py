@@ -98,6 +98,11 @@ def main(args: argparse.Namespace) -> Optional[int]:
                     i += 1
                 print(f"Saving image to '{i}.png'")
                 Image.fromarray(img).save(f"{i}.png")
+            else:
+                # Print response JSON instead
+                print("1/1 :: response:")
+                print(json.dumps(data, indent=4))
+
         else:
             print(f"Failed to execute API request, status code: {response.status_code}")
             try:
@@ -141,6 +146,10 @@ def main(args: argparse.Namespace) -> Optional[int]:
                         i += 1
                     print(f"Saving image to '{i}.png'")
                     Image.fromarray(img).save(f"{i}.png")
+                else:
+                    # Print the corresponding JSON response instead
+                    print(f"{i + 1}/{len(data['batchResults'])} :: response:")
+                    print(json.dumps(result, indent=4))
 
             # print(json.dumps(data, indent=2))
         else:
@@ -169,7 +178,9 @@ if __name__ == "__main__":
         default=settings.API_DEFAULT_URL,
         help="Base URL (with port, if applies) to overwrite.",
     )
-    parser.add_argument("--no-save", help="Do not save resulting images.")
+    parser.add_argument(
+        "--no-save", action="store_true", help="Do not save resulting images."
+    )
 
     args = parser.parse_args()
 
