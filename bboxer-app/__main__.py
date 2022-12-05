@@ -93,8 +93,11 @@ def main(args: argparse.Namespace) -> Optional[int]:
                 img = draw_bbox(img, bbox, detection["name"], score=detection["score"])
 
             if not args.no_save:
-                print("Saving image to '1.png'")
-                Image.fromarray(img).save("1.png")
+                i = 1
+                while Path(f"{i}.png").exists():
+                    i += 1
+                print(f"Saving image to '{i}.png'")
+                Image.fromarray(img).save(f"{i}.png")
         else:
             print(f"Failed to execute API request, status code: {response.status_code}")
             try:
@@ -134,6 +137,8 @@ def main(args: argparse.Namespace) -> Optional[int]:
                     )
 
                 if not args.no_save:
+                    while Path(f"{i}.png").exists():
+                        i += 1
                     print(f"Saving image to '{i}.png'")
                     Image.fromarray(img).save(f"{i}.png")
 
